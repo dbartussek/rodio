@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::source::Mono;
 use crate::{Sample, Source};
 
 /// Combines channels in input into a single mono source, then plays that mono sound
@@ -10,7 +11,7 @@ where
     I: Source,
     I::Item: Sample,
 {
-    input: I,
+    input: Mono<I>,
     // Channel number is used as index for amplification value.
     channel_volumes: Vec<f32>,
     // Current listener being processed.
@@ -23,21 +24,14 @@ where
     I: Source,
     I::Item: Sample,
 {
-    pub fn new(mut input: I, channel_volumes: Vec<f32>) -> ChannelVolume<I>
+    pub fn new(input: I, channel_volumes: Vec<f32>) -> ChannelVolume<I>
     where
         I: Source,
         I::Item: Sample,
     {
-        let mut sample = None;
-        for _ in 0..input.channels() {
-            if let Some(s) = input.next() {
-                sample = Some(
-                    sample
-                        .get_or_insert_with(I::Item::zero_value)
-                        .saturating_add(s),
-                );
-            }
-        }
+        let mut input = Mono::new(input);
+        let sample = input.next();
+
         ChannelVolume {
             input,
             channel_volumes,
@@ -55,19 +49,33 @@ where
     /// Returns a reference to the inner source.
     #[inline]
     pub fn inner(&self) -> &I {
-        &self.input
+        self.input.inner()
     }
 
     /// Returns a mutable reference to the inner source.
     #[inline]
     pub fn inner_mut(&mut self) -> &mut I {
-        &mut self.input
+        self.input.inner_mut()
     }
 
     /// Returns the inner source.
     #[inline]
     pub fn into_inner(self) -> I {
-        self.input
+        self.input.into_inner()
+    }
+
+    fn map_size_hint(&self, samples: usize) -> usize {
+        // We return 1 item per channel per sample
+        let input_provides = samples * self.channel_volumes.len();
+
+        // In addition, we may be in the process of emitting values from self.current_sample
+        let current_sample = if self.current_sample.is_some() {
+            self.channel_volumes.len() - self.current_channel
+        } else {
+            0
+        };
+
+        input_provides + current_sample
     }
 }
 
@@ -85,43 +93,18 @@ where
             .current_sample
             .map(|sample| sample.amplify(self.channel_volumes[self.current_channel]));
         self.current_channel += 1;
+
         if self.current_channel >= self.channel_volumes.len() {
             self.current_channel = 0;
-            self.current_sample = None;
-            for _ in 0..self.input.channels() {
-                if let Some(s) = self.input.next() {
-                    self.current_sample = Some(
-                        self.current_sample
-                            .get_or_insert_with(I::Item::zero_value)
-                            .saturating_add(s),
-                    );
-                }
-            }
+            self.current_sample = self.input.next();
         }
         ret
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let map_size_hint = |input_hint: usize| -> usize {
-            // The input source provides a number of samples (input_hint / channels);
-            // We return 1 item per channel per sample => * channel_volumes
-            let input_provides =
-                input_hint / (self.input.channels() as usize) * self.channel_volumes.len();
-
-            // In addition, we may be in the process of emitting additional values from
-            // self.current_sample
-            let current_sample = if self.current_sample.is_some() {
-                self.channel_volumes.len() - self.current_channel
-            } else {
-                0
-            };
-
-            input_provides + current_sample
-        };
-
         let (min, max) = self.input.size_hint();
-        (map_size_hint(min), max.map(map_size_hint))
+        (self.map_size_hint(min), max.map(|v| self.map_size_hint(v)))
     }
 }
 
@@ -139,7 +122,9 @@ where
 {
     #[inline]
     fn current_frame_len(&self) -> Option<usize> {
-        self.input.current_frame_len()
+        self.input
+            .current_frame_len()
+            .map(|v| self.map_size_hint(v))
     }
 
     #[inline]
