@@ -164,7 +164,7 @@ mod tests {
     use std::time::Duration;
 
     use crate::buffer::SamplesBuffer;
-    use crate::source::Source;
+    use crate::source::SourceUtils;
 
     fn test_skip_duration_samples_left(
         channels: u16,

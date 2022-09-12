@@ -2,7 +2,7 @@ use std::f32;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crate::source::Spatial;
+use crate::source::{SourceUtils, Spatial};
 use crate::stream::{OutputStreamHandle, PlayError};
 use crate::{Sample, Sink, Source};
 

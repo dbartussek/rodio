@@ -340,7 +340,7 @@ mod test {
         ///  except by a negligible amount (± 1ms).  Reproduces #316.
         /// Ignored, pending a bug fix.
         fn preserve_durations(d: Duration, freq: f32, to: u32) -> () {
-            use crate::source::{SineWave, Source};
+            use crate::source::{SineWave, Source, SourceUtils};
 
             let to = if to == 0 { return; } else { SampleRate(to) };
             let source = SineWave::new(freq).take_duration(d);

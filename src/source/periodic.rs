@@ -125,7 +125,7 @@ mod tests {
     use std::time::Duration;
 
     use crate::buffer::SamplesBuffer;
-    use crate::source::Source;
+    use crate::source::SourceUtils;
 
     #[test]
     fn stereo_access() {

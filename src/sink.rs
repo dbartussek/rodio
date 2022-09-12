@@ -3,6 +3,7 @@ use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use crate::source::SourceUtils;
 use crate::stream::{OutputStreamHandle, PlayError};
 use crate::{queue, source::Done, Sample, Source};
 
@@ -199,7 +200,8 @@ impl Drop for Sink {
 #[cfg(test)]
 mod tests {
     use crate::buffer::SamplesBuffer;
-    use crate::{Sink, Source};
+    use crate::source::SourceUtils;
+    use crate::Sink;
 
     #[test]
     fn test_pause_and_stop() {

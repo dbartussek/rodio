@@ -1,4 +1,4 @@
-use rodio::Source;
+use rodio::source::SourceUtils;
 use std::io::BufReader;
 use std::time::Duration;
 

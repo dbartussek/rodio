@@ -18,7 +18,7 @@
 //! ```no_run
 //! use std::fs::File;
 //! use std::io::BufReader;
-//! use rodio::{Decoder, OutputStream, source::Source};
+//! use rodio::{Decoder, OutputStream, source::{Source, SourceUtils}};
 //!
 //! // Get a output stream handle to the default physical sound device
 //! let (_stream, stream_handle) = OutputStream::try_default().unwrap();
@@ -49,7 +49,7 @@
 //! use std::io::BufReader;
 //! use std::time::Duration;
 //! use rodio::{Decoder, OutputStream, Sink};
-//! use rodio::source::{SineWave, Source};
+//! use rodio::source::{SineWave, Source, SourceUtils};
 //!
 //! let (_stream, stream_handle) = OutputStream::try_default().unwrap();
 //! let sink = Sink::try_new(&stream_handle).unwrap();
@@ -76,7 +76,7 @@
 //! Example:
 //!
 //! ```
-//! use rodio::Source;
+//! use rodio::{Source, source::SourceUtils};
 //! use std::time::Duration;
 //!
 //! // Repeats the first five seconds of the sound forever.

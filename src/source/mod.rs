@@ -145,7 +145,87 @@ where
     ///
     /// `None` indicates at the same time "infinite" or "unknown".
     fn total_duration(&self) -> Option<Duration>;
+}
 
+impl<S> Source for Box<dyn Source<Item = S>>
+where
+    S: Sample,
+{
+    #[inline]
+    fn current_frame_len(&self) -> Option<usize> {
+        (**self).current_frame_len()
+    }
+
+    #[inline]
+    fn channels(&self) -> u16 {
+        (**self).channels()
+    }
+
+    #[inline]
+    fn sample_rate(&self) -> u32 {
+        (**self).sample_rate()
+    }
+
+    #[inline]
+    fn total_duration(&self) -> Option<Duration> {
+        (**self).total_duration()
+    }
+}
+
+impl<S> Source for Box<dyn Source<Item = S> + Send>
+where
+    S: Sample,
+{
+    #[inline]
+    fn current_frame_len(&self) -> Option<usize> {
+        (**self).current_frame_len()
+    }
+
+    #[inline]
+    fn channels(&self) -> u16 {
+        (**self).channels()
+    }
+
+    #[inline]
+    fn sample_rate(&self) -> u32 {
+        (**self).sample_rate()
+    }
+
+    #[inline]
+    fn total_duration(&self) -> Option<Duration> {
+        (**self).total_duration()
+    }
+}
+
+impl<S> Source for Box<dyn Source<Item = S> + Send + Sync>
+where
+    S: Sample,
+{
+    #[inline]
+    fn current_frame_len(&self) -> Option<usize> {
+        (**self).current_frame_len()
+    }
+
+    #[inline]
+    fn channels(&self) -> u16 {
+        (**self).channels()
+    }
+
+    #[inline]
+    fn sample_rate(&self) -> u32 {
+        (**self).sample_rate()
+    }
+
+    #[inline]
+    fn total_duration(&self) -> Option<Duration> {
+        (**self).total_duration()
+    }
+}
+
+pub trait SourceUtils: Source
+where
+    <Self as Iterator>::Item: Sample,
+{
     /// Stores the source in a buffer in addition to returning it. This iterator can be cloned.
     #[inline]
     fn buffered(self) -> Buffered<Self>
@@ -340,77 +420,9 @@ where
     }
 }
 
-impl<S> Source for Box<dyn Source<Item = S>>
+impl<T> SourceUtils for T
 where
-    S: Sample,
+    T: Source,
+    <T as Iterator>::Item: Sample,
 {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        (**self).current_frame_len()
-    }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        (**self).channels()
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        (**self).sample_rate()
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        (**self).total_duration()
-    }
-}
-
-impl<S> Source for Box<dyn Source<Item = S> + Send>
-where
-    S: Sample,
-{
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        (**self).current_frame_len()
-    }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        (**self).channels()
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        (**self).sample_rate()
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        (**self).total_duration()
-    }
-}
-
-impl<S> Source for Box<dyn Source<Item = S> + Send + Sync>
-where
-    S: Sample,
-{
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        (**self).current_frame_len()
-    }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        (**self).channels()
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        (**self).sample_rate()
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        (**self).total_duration()
-    }
 }
