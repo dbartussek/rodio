@@ -1,7 +1,9 @@
 //! Sources of sound and various filters.
 
+use std::iter::FromIterator;
 use std::time::Duration;
 
+use crate::buffer::GenericBuffer;
 use crate::Sample;
 
 pub use self::amplify::Amplify;
@@ -417,6 +419,15 @@ where
         Self: Source<Item = f32>,
     {
         blt::high_pass(self, freq)
+    }
+
+    #[inline]
+    fn collect_source<B>(self) -> GenericBuffer<Self::Item, B>
+    where
+        Self: Sized,
+        B: AsRef<[Self::Item]> + FromIterator<Self::Item>,
+    {
+        GenericBuffer::collect(self)
     }
 }
 

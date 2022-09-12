@@ -1,33 +1,32 @@
-//! A simple source of samples coming from a buffer.
-//!
-//! The `SamplesBuffer` struct can be used to treat a list of values as a `Source`.
-//!
-//! # Example
-//!
-//! ```
-//! use rodio::buffer::SamplesBuffer;
-//! let _ = SamplesBuffer::new(1, 44100, vec![1i16, 2, 3, 4, 5, 6]);
-//! ```
-//!
-
+use std::iter::FromIterator;
+use std::marker::PhantomData;
+use std::sync::Arc;
 use std::time::Duration;
-use std::vec::IntoIter as VecIntoIter;
 
 use crate::{Sample, Source};
 
+pub type SamplesBuffer<S> = GenericBuffer<S, Vec<S>>;
+pub type StaticSamplesBuffer<S> = GenericBuffer<S, &'static [S]>;
+pub type SharedSamplesBuffer<S> = GenericBuffer<S, Arc<[S]>>;
+
 /// A buffer of samples treated as a source.
-pub struct SamplesBuffer<S> {
-    data: VecIntoIter<S>,
+#[derive(Clone)]
+pub struct GenericBuffer<S, Container> {
+    data: Container,
+    position: usize,
     channels: u16,
     sample_rate: u32,
     duration: Duration,
+
+    sample_type: PhantomData<S>,
 }
 
-impl<S> SamplesBuffer<S>
+impl<S, Container> GenericBuffer<S, Container>
 where
     S: Sample,
+    Container: AsRef<[S]>,
 {
-    /// Builds a new `SamplesBuffer`.
+    /// Builds a new `SliceBuffer`.
     ///
     /// # Panic
     ///
@@ -36,15 +35,13 @@ where
     /// - Panics if the length of the buffer is larger than approximately 16 billion elements.
     ///   This is because the calculation of the duration would overflow.
     ///
-    pub fn new<D>(channels: u16, sample_rate: u32, data: D) -> SamplesBuffer<S>
-    where
-        D: Into<Vec<S>>,
-    {
+    pub fn new(channels: u16, sample_rate: u32, data: Container) -> Self {
         assert!(channels != 0);
         assert!(sample_rate != 0);
 
-        let data = data.into();
-        let duration_ns = 1_000_000_000u64.checked_mul(data.len() as u64).unwrap()
+        let duration_ns = 1_000_000_000u64
+            .checked_mul(data.as_ref().len() as u64)
+            .unwrap()
             / sample_rate as u64
             / channels as u64;
         let duration = Duration::new(
@@ -52,18 +49,48 @@ where
             (duration_ns % 1_000_000_000) as u32,
         );
 
-        SamplesBuffer {
-            data: data.into_iter(),
+        Self {
+            data,
+            position: 0,
             channels,
             sample_rate,
             duration,
+            sample_type: Default::default(),
         }
+    }
+
+    pub fn with_collector<Input, Collector>(input: Input, collector: Collector) -> Self
+    where
+        Input: Source<Item = S>,
+        Collector: FnOnce(Input) -> Container,
+    {
+        let channels = input.channels();
+        let sample_rate = input.sample_rate();
+        Self::new(channels, sample_rate, collector(input))
+    }
+
+    pub fn reset(&mut self) {
+        self.position = 0;
     }
 }
 
-impl<S> Source for SamplesBuffer<S>
+impl<S, Container> GenericBuffer<S, Container>
 where
     S: Sample,
+    Container: AsRef<[S]> + FromIterator<S>,
+{
+    pub fn collect<Input>(input: Input) -> Self
+    where
+        Input: Source<Item = S>,
+    {
+        Self::with_collector(input, |input| input.collect())
+    }
+}
+
+impl<S, Container> Source for GenericBuffer<S, Container>
+where
+    S: Sample + Clone,
+    Container: AsRef<[S]>,
 {
     #[inline]
     fn current_frame_len(&self) -> Option<usize> {
@@ -86,62 +113,32 @@ where
     }
 }
 
-impl<S> Iterator for SamplesBuffer<S>
+impl<S, Container> Iterator for GenericBuffer<S, Container>
 where
-    S: Sample,
+    S: Sample + Clone,
+    Container: AsRef<[S]>,
 {
     type Item = S;
 
     #[inline]
     fn next(&mut self) -> Option<S> {
-        self.data.next()
+        let value = self.data.as_ref().get(self.position).cloned();
+        if value.is_some() {
+            self.position += 1;
+        }
+        value
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.data.size_hint()
+        let value = self.data.as_ref().len() - self.position;
+        (value, Some(value))
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::buffer::SamplesBuffer;
-    use crate::source::Source;
-
-    #[test]
-    fn basic() {
-        let _ = SamplesBuffer::new(1, 44100, vec![0i16, 0, 0, 0, 0, 0]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn panic_if_zero_channels() {
-        SamplesBuffer::new(0, 44100, vec![0i16, 0, 0, 0, 0, 0]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn panic_if_zero_sample_rate() {
-        SamplesBuffer::new(1, 0, vec![0i16, 0, 0, 0, 0, 0]);
-    }
-
-    #[test]
-    fn duration_basic() {
-        let buf = SamplesBuffer::new(2, 2, vec![0i16, 0, 0, 0, 0, 0]);
-        let dur = buf.total_duration().unwrap();
-        assert_eq!(dur.as_secs(), 1);
-        assert_eq!(dur.subsec_nanos(), 500_000_000);
-    }
-
-    #[test]
-    fn iteration() {
-        let mut buf = SamplesBuffer::new(1, 44100, vec![1i16, 2, 3, 4, 5, 6]);
-        assert_eq!(buf.next(), Some(1));
-        assert_eq!(buf.next(), Some(2));
-        assert_eq!(buf.next(), Some(3));
-        assert_eq!(buf.next(), Some(4));
-        assert_eq!(buf.next(), Some(5));
-        assert_eq!(buf.next(), Some(6));
-        assert_eq!(buf.next(), None);
-    }
+impl<S, Container> ExactSizeIterator for GenericBuffer<S, Container>
+where
+    S: Sample + Clone,
+    Container: AsRef<[S]>,
+{
 }
