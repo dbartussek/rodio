@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
-use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// An infinite source that produces zero.
@@ -54,7 +54,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Infinite
     }
 }

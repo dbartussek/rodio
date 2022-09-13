@@ -13,6 +13,7 @@ use crate::Source;
 
 #[cfg(feature = "symphonia")]
 use self::read_seek_source::ReadSeekSource;
+use crate::source::SourceDuration;
 #[cfg(feature = "symphonia")]
 use ::symphonia::core::io::{MediaSource, MediaSourceStream};
 
@@ -350,7 +351,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         match &self.0 {
             #[cfg(all(feature = "wav", not(feature = "symphonia-wav")))]
             DecoderImpl::Wav(source) => source.total_duration(),
@@ -362,7 +363,7 @@ where
             DecoderImpl::Mp3(source) => source.total_duration(),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source) => source.total_duration(),
-            DecoderImpl::None(_) => Some(Duration::default()),
+            DecoderImpl::None(_) => SourceDuration::Exact(Duration::default()),
         }
     }
 }
@@ -516,8 +517,8 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Infinite
     }
 }
 

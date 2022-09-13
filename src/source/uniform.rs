@@ -1,7 +1,7 @@
 use std::cmp;
-use std::time::Duration;
 
 use crate::conversions::{ChannelCountConverter, DataConverter, SampleRateConverter};
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// An iterator that reads from a `Source` and converts the samples to a specific rate and
@@ -19,7 +19,7 @@ where
     inner: Option<DataConverter<ChannelCountConverter<SampleRateConverter<Take<I>>>, D>>,
     target_channels: u16,
     target_sample_rate: u32,
-    total_duration: Option<Duration>,
+    total_duration: SourceDuration,
 }
 
 impl<I, D> UniformSourceIterator<I, D>
@@ -132,7 +132,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         self.total_duration
     }
 }

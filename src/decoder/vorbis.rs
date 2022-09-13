@@ -1,9 +1,9 @@
 use std::io::{Read, Seek, SeekFrom};
-use std::time::Duration;
 use std::vec;
 
 use crate::Source;
 
+use crate::source::SourceDuration;
 use lewton::inside_ogg::OggStreamReader;
 
 /// Decoder for an OGG file that contains Vorbis sound format.
@@ -70,8 +70,8 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Unknown
     }
 }
 

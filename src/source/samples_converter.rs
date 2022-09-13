@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
-use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 use cpal::Sample as CpalSample;
 
@@ -92,7 +92,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         self.inner.total_duration()
     }
 }

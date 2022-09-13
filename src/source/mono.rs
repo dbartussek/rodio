@@ -1,7 +1,7 @@
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 use cpal::Sample as CPSample;
 use std::fmt::Debug;
-use std::time::Duration;
 
 pub trait MonoMapper: Clone + Debug {
     type Args;
@@ -180,7 +180,7 @@ where
         self.input.sample_rate()
     }
 
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         self.input.total_duration()
     }
 }

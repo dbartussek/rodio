@@ -1,8 +1,8 @@
 use std::io::{Read, Seek, SeekFrom};
-use std::time::Duration;
 
 use crate::Source;
 
+use crate::source::SourceDuration;
 use minimp3::{Decoder, Frame};
 
 pub struct Mp3Decoder<R>
@@ -56,8 +56,8 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Unknown
     }
 }
 

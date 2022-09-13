@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// Internal function that builds a `Delay` object.
@@ -100,9 +101,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        self.input
-            .total_duration()
-            .map(|val| val + self.requested_duration)
+    fn total_duration(&self) -> SourceDuration {
+        self.input.total_duration() + SourceDuration::Exact(self.requested_duration)
     }
 }

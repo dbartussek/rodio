@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use crate::Source;
 
+use crate::source::SourceDuration;
 use hound::{SampleFormat, WavReader};
 
 /// Decoder for the WAV format.
@@ -125,8 +126,8 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        Some(self.total_duration)
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Exact(self.total_duration)
     }
 }
 

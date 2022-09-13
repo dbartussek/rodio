@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
-use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::Source;
 
 // Implemented following http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
@@ -144,7 +144,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         self.input.total_duration()
     }
 }

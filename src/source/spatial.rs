@@ -1,6 +1,4 @@
-use std::time::Duration;
-
-use crate::source::ChannelVolume;
+use crate::source::{ChannelVolume, SourceDuration};
 use crate::{Sample, Source};
 
 /// Combines channels in input into a single mono source, then plays that mono sound
@@ -114,7 +112,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         self.input.total_duration()
     }
 }

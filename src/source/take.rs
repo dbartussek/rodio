@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// Internal function that builds a `TakeDuration` object.
@@ -165,15 +166,9 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        if let Some(duration) = self.input.total_duration() {
-            if duration < self.requested_duration {
-                Some(duration)
-            } else {
-                Some(self.requested_duration)
-            }
-        } else {
-            None
-        }
+    fn total_duration(&self) -> SourceDuration {
+        self.input
+            .total_duration()
+            .min_duration(SourceDuration::Exact(self.requested_duration))
     }
 }

@@ -1,6 +1,7 @@
 //! Sources of sound and various filters.
 
 use std::iter::FromIterator;
+use std::ops::Add;
 use std::time::Duration;
 
 use crate::buffer::GenericBuffer;
@@ -144,9 +145,7 @@ where
     fn sample_rate(&self) -> u32;
 
     /// Returns the total duration of this source, if known.
-    ///
-    /// `None` indicates at the same time "infinite" or "unknown".
-    fn total_duration(&self) -> Option<Duration>;
+    fn total_duration(&self) -> SourceDuration;
 }
 
 impl<S> Source for Box<dyn Source<Item = S>>
@@ -169,7 +168,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         (**self).total_duration()
     }
 }
@@ -194,7 +193,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         (**self).total_duration()
     }
 }
@@ -219,7 +218,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         (**self).total_duration()
     }
 }
@@ -431,7 +430,10 @@ where
     }
 
     #[inline]
-    fn when_done<S>(self, signal: S) -> WhenDone<Self, S> {
+    fn when_done<S>(self, signal: S) -> WhenDone<Self, S>
+    where
+        Self: Sized,
+    {
         WhenDone::new(self, signal)
     }
 }
@@ -441,4 +443,46 @@ where
     T: Source,
     <T as Iterator>::Item: Sample,
 {
+}
+
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub enum SourceDuration {
+    Unknown,
+    Exact(Duration),
+    Infinite,
+}
+
+impl SourceDuration {
+    pub fn min_duration(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Unknown, _) | (_, Self::Unknown) => Self::Unknown,
+            (Self::Infinite, value) | (value, Self::Infinite) => value,
+            (Self::Exact(a), Self::Exact(b)) => Self::Exact(a.min(b)),
+        }
+    }
+    pub fn max_duration(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Unknown, _) | (_, Self::Unknown) => Self::Unknown,
+            (Self::Infinite, _) | (_, Self::Infinite) => Self::Infinite,
+            (Self::Exact(a), Self::Exact(b)) => Self::Exact(a.max(b)),
+        }
+    }
+}
+
+impl Add for SourceDuration {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Self::Unknown, _) | (_, Self::Unknown) => Self::Unknown,
+            (Self::Infinite, _) | (_, Self::Infinite) => Self::Infinite,
+            (Self::Exact(a), Self::Exact(b)) => Self::Exact(a + b),
+        }
+    }
+}
+
+impl From<Duration> for SourceDuration {
+    fn from(duration: Duration) -> Self {
+        Self::Exact(duration)
+    }
 }

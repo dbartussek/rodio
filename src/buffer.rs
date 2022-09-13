@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 pub type SamplesBuffer<S> = GenericBuffer<S, Vec<S>>;
@@ -108,8 +109,8 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        Some(self.duration)
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Exact(self.duration)
     }
 }
 

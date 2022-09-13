@@ -1,8 +1,5 @@
-use std::time::Duration;
-
 use crate::source::buffered::Buffered;
-
-use crate::source::SourceUtils;
+use crate::source::{SourceDuration, SourceUtils};
 use crate::{Sample, Source};
 
 /// Internal function that builds a `Repeat` object.
@@ -82,8 +79,8 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Infinite
     }
 }
 

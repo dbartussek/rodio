@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use crate::Source;
 
+use crate::source::SourceDuration;
 use claxon::FlacReader;
 
 /// Decoder for the Flac format.
@@ -73,11 +74,16 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         // `samples` in FLAC means "inter-channel samples" aka frames
         // so we do not divide by `self.channels` here.
         self.samples
-            .map(|s| Duration::from_micros(s * 1_000_000 / self.sample_rate as u64))
+            .map(|s| {
+                SourceDuration::Exact(Duration::from_micros(
+                    s * 1_000_000 / self.sample_rate as u64,
+                ))
+            })
+            .unwrap_or(SourceDuration::Unknown)
     }
 }
 

@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// An empty source.
@@ -50,7 +51,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        Some(Duration::new(0, 0))
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Exact(Duration::new(0, 0))
     }
 }

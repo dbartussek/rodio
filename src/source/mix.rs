@@ -1,7 +1,7 @@
 use std::cmp;
-use std::time::Duration;
 
 use crate::source::uniform::UniformSourceIterator;
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// Internal function that builds a `Mix` object.
@@ -109,13 +109,10 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         let f1 = self.input1.total_duration();
         let f2 = self.input2.total_duration();
 
-        match (f1, f2) {
-            (Some(f1), Some(f2)) => Some(cmp::max(f1, f2)),
-            _ => None,
-        }
+        f1.max_duration(f2)
     }
 }

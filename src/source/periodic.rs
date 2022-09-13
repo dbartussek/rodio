@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// Internal function that builds a `PeriodicAccess` object.
@@ -114,7 +115,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         self.input.total_duration()
     }
 }

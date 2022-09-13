@@ -1,5 +1,4 @@
-use std::time::Duration;
-
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// Builds a source that chains sources provided by an iterator.
@@ -132,8 +131,8 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Unknown
     }
 }
 

@@ -13,6 +13,7 @@ use symphonia::{
     default::get_probe,
 };
 
+use crate::source::SourceDuration;
 use crate::Source;
 
 use super::DecoderError;
@@ -133,8 +134,8 @@ impl Source for SymphoniaDecoder {
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Unknown
     }
 }
 

@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
-use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::Source;
 
 /// An infinite source that produces a sine.
@@ -52,7 +52,7 @@ impl Source for SineWave {
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        SourceDuration::Infinite
     }
 }

@@ -5,7 +5,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::Duration;
 
-use crate::source::{Empty, Source, SourceUtils, Zero};
+use crate::source::{Empty, Source, SourceDuration, SourceUtils, Zero};
 use crate::Sample;
 
 /// Builds a new queue. It consists of an input and an output.
@@ -148,8 +148,18 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        let current_duration = self.current.total_duration();
+        let queued: SourceDuration = self
+            .input
+            .next_sounds
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|s| s.0.total_duration())
+            .reduce(|a, b| a + b)
+            .unwrap_or(SourceDuration::Exact(Duration::default()));
+        current_duration + queued
     }
 }
 

@@ -2,9 +2,8 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
-use crate::source::{Source, UniformSourceIterator};
+use crate::source::{Source, SourceDuration, UniformSourceIterator};
 use crate::Sample;
 
 /// Builds a new mixer.
@@ -103,8 +102,12 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
+    fn total_duration(&self) -> SourceDuration {
+        self.current_sources
+            .iter()
+            .map(|s| s.total_duration())
+            .reduce(|a, b| a.max_duration(b))
+            .unwrap_or(SourceDuration::Unknown)
     }
 }
 

@@ -1,8 +1,8 @@
 use std::cmp;
 use std::mem;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// Internal function that builds a `Buffered` object.
@@ -35,7 +35,7 @@ where
     position_in_frame: usize,
 
     /// Obtained once at creation and never modified again.
-    total_duration: Option<Duration>,
+    total_duration: SourceDuration,
 }
 
 enum Frame<I>
@@ -236,7 +236,7 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
+    fn total_duration(&self) -> SourceDuration {
         self.total_duration
     }
 }

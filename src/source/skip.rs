@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 const NS_PER_SECOND: u128 = 1_000_000_000;
@@ -151,11 +152,14 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        self.input.total_duration().map(|val| {
-            val.checked_sub(self.skipped_duration)
-                .unwrap_or_else(|| Duration::from_secs(0))
-        })
+    fn total_duration(&self) -> SourceDuration {
+        match self.input.total_duration() {
+            SourceDuration::Exact(val) => SourceDuration::Exact(
+                val.checked_sub(self.skipped_duration)
+                    .unwrap_or_else(|| Duration::from_secs(0)),
+            ),
+            other => other,
+        }
     }
 }
 

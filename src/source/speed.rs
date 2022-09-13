@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::source::SourceDuration;
 use crate::{Sample, Source};
 
 /// Internal function that builds a `Speed` object.
@@ -90,17 +91,18 @@ where
     }
 
     #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        // TODO: the crappy API of duration makes this code difficult to write
-        if let Some(duration) = self.input.total_duration() {
-            let as_ns = duration.as_secs() * 1000000000 + duration.subsec_nanos() as u64;
-            let new_val = (as_ns as f32 / self.factor) as u64;
-            Some(Duration::new(
-                new_val / 1000000000,
-                (new_val % 1000000000) as u32,
-            ))
-        } else {
-            None
+    fn total_duration(&self) -> SourceDuration {
+        match self.input.total_duration() {
+            SourceDuration::Exact(duration) => {
+                // TODO: the crappy API of duration makes this code difficult to write
+                let as_ns = duration.as_secs() * 1000000000 + duration.subsec_nanos() as u64;
+                let new_val = (as_ns as f32 / self.factor) as u64;
+                SourceDuration::Exact(Duration::new(
+                    new_val / 1000000000,
+                    (new_val % 1000000000) as u32,
+                ))
+            }
+            other => other,
         }
     }
 }
