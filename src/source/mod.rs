@@ -12,7 +12,7 @@ pub use self::buffered::Buffered;
 pub use self::channel_volume::ChannelVolume;
 pub use self::crossfade::Crossfade;
 pub use self::delay::Delay;
-pub use self::done::Done;
+pub use self::done::{Done, WhenDone};
 pub use self::empty::Empty;
 pub use self::fadein::FadeIn;
 pub use self::from_factory::{from_factory, FromFactoryIter};
@@ -428,6 +428,11 @@ where
         B: AsRef<[Self::Item]> + FromIterator<Self::Item>,
     {
         GenericBuffer::collect(self)
+    }
+
+    #[inline]
+    fn when_done<S>(self, signal: S) -> WhenDone<Self, S> {
+        WhenDone::new(self, signal)
     }
 }
 
