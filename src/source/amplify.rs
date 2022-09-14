@@ -18,6 +18,11 @@ pub struct Amplify<I> {
 }
 
 impl<I> Amplify<I> {
+    #[inline]
+    pub fn factor(&self) -> f32 {
+        self.factor
+    }
+
     /// Modifies the amplification factor.
     #[inline]
     pub fn set_factor(&mut self, factor: f32) {

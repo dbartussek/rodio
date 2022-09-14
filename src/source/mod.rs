@@ -29,6 +29,7 @@ pub use self::skip::SkipDuration;
 pub use self::spatial::Spatial;
 pub use self::speed::Speed;
 pub use self::stoppable::Stoppable;
+pub use self::stoppable_fade::StoppableFade;
 pub use self::take::TakeDuration;
 pub use self::uniform::UniformSourceIterator;
 pub use self::zero::Zero;
@@ -55,6 +56,7 @@ mod skip;
 mod spatial;
 mod speed;
 mod stoppable;
+mod stoppable_fade;
 mod take;
 mod uniform;
 mod zero;
@@ -227,6 +229,16 @@ pub trait SourceUtils: Source
 where
     <Self as Iterator>::Item: Sample,
 {
+    /// Returns the duration elapsed for each sample extracted.
+    #[inline]
+    fn duration_per_sample(&self) -> Duration {
+        const NANOS_PER_SEC: u64 = 1_000_000_000;
+
+        let ns = NANOS_PER_SEC / (self.sample_rate() as u64 * self.channels() as u64);
+        // \|/ the maximum value of `ns` is one billion, so this can't fail
+        Duration::new(0, ns as u32)
+    }
+
     /// Stores the source in a buffer in addition to returning it. This iterator can be cloned.
     #[inline]
     fn buffered(self) -> Buffered<Self>
@@ -398,6 +410,15 @@ where
         Self: Sized,
     {
         stoppable::stoppable(self)
+    }
+
+    /// Makes the sound stoppable with fadeout.
+    #[inline]
+    fn stoppable_fade(self) -> StoppableFade<Self>
+    where
+        Self: Sized,
+    {
+        StoppableFade::new(self)
     }
 
     /// Applies a low-pass filter to the source.

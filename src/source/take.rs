@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::source::SourceDuration;
+use crate::source::{SourceDuration, SourceUtils};
 use crate::{Sample, Source};
 
 /// Internal function that builds a `TakeDuration` object.
@@ -11,7 +11,7 @@ where
 {
     TakeDuration {
         current_frame_len: input.current_frame_len(),
-        duration_per_sample: TakeDuration::get_duration_per_sample(&input),
+        duration_per_sample: input.duration_per_sample(),
         input,
         remaining_duration: duration,
         requested_duration: duration,
@@ -44,8 +44,6 @@ impl DurationFilter {
     }
 }
 
-const NANOS_PER_SEC: u64 = 1_000_000_000;
-
 /// A source that truncates the given source to a certain duration.
 #[derive(Clone, Debug)]
 pub struct TakeDuration<I> {
@@ -64,14 +62,6 @@ where
     I: Source,
     I::Item: Sample,
 {
-    /// Returns the duration elapsed for each sample extracted.
-    #[inline]
-    fn get_duration_per_sample(input: &I) -> Duration {
-        let ns = NANOS_PER_SEC / (input.sample_rate() as u64 * input.channels() as u64);
-        // \|/ the maximum value of `ns` is one billion, so this can't fail
-        Duration::new(0, ns as u32)
-    }
-
     /// Returns a reference to the inner source.
     #[inline]
     pub fn inner(&self) -> &I {
@@ -113,7 +103,7 @@ where
             } else {
                 self.current_frame_len = self.input.current_frame_len();
                 // Sample rate might have changed
-                self.duration_per_sample = Self::get_duration_per_sample(&self.input);
+                self.duration_per_sample = self.input.duration_per_sample();
             }
         }
 
@@ -143,10 +133,8 @@ where
 {
     #[inline]
     fn current_frame_len(&self) -> Option<usize> {
-        let remaining_nanos = self.remaining_duration.as_secs() * NANOS_PER_SEC
-            + self.remaining_duration.subsec_nanos() as u64;
-        let nanos_per_sample = self.duration_per_sample.as_secs() * NANOS_PER_SEC
-            + self.duration_per_sample.subsec_nanos() as u64;
+        let remaining_nanos = self.requested_duration.as_nanos() as u64;
+        let nanos_per_sample = self.duration_per_sample.as_nanos() as u64;
         let remaining_samples = (remaining_nanos / nanos_per_sample) as usize;
 
         self.input
